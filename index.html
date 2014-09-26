@@ -2,85 +2,9 @@
 <head>
 </head>
 <body>
-
-
-
-<script src="moment.js"></script>
-<script src="tabletop.js"></script>
-<script src="underscore.js"></script>
-<script type="text/javascript">
-window.onload = function() {
-    init()
-};
-
-var public_spreadsheet_url = '1aEV-CZIqJD9hHJWNWTWIN0I4Cgz3M8jpl4hQwA9l8JU';
-
-function init() {
-    Tabletop.init({
-        key: public_spreadsheet_url,
-        callback: showHours,
-        simpleSheet: false
-    });
-}
-
-var page_date = new Date();
-
-function showHours(data, tabletop) {
-    console.log(data, tabletop);
-
-    // array with date (using moment) for each day-of-week (dow) 0=monday, 6=sunday
-    var dates_per_day = [];
-
-    // array with name of day for each dow
-    var names_per_day = [
-        'monday',
-        'tuesday',
-        'wednesday',
-        'thursday',
-        'friday',
-        'saturday',
-        'sunday'
-    ];
-
-    // array of semester for each dow--in case the semester changes in the middle of the week
-    var semester_per_day = []
-
-    // get passed date -or- current date
-    var current_date = moment(page_date);
-
-    // use that date to determine the monday of "this" week
-    var start_date = moment().subtract(current_date.isoWeekday()-1, 'days');
-
-    for (var i=0; i < 7; i++) {
-        var date = start_date.add(i, 'days');
-        
-        dates_per_day.push(date);
-        
-        semester_per_day.push(_.find(data['Semester Breakdown'].elements, function(semester) {
-            if (    date.isSame(semester.start, 'day') ||
-                    date.isSame(semester.end, 'day') ||
-                    (   date.isAfter(semester.start, 'day') &&
-                        date.isBefore(semester.end, 'day'))) {
-                return semester.semestername;   
-            }
-        }));
-    }
-
-    console.log('semester_per_day', semester_per_day);
-
-    // build hash of arrays (weekly hours) with lib name as key, and value as array of hours for each dow
-
-        // for each lib
-            // for each dow
-                // check date against lib exceptions list
-                // if no exception, use default hours from default hours object
-
-    // build template passing weekly hours hash
-
-    // print!
-
-    // should this be a backbone app?
-}
-</script>
+<script src="js/vendor/moment.js"></script>
+<script src="js/vendor/tabletop.js"></script>
+<script src="js/vendor/underscore.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>
