@@ -11,7 +11,7 @@ require([
             key: '1aEV-CZIqJD9hHJWNWTWIN0I4Cgz3M8jpl4hQwA9l8JU',
 
             // location of hard-coded json files (not sure where they'll be stored yet)
-            proxy: "http://18.189.57.222:8666/",
+            proxy: "http://libraries-dev.mit.edu/app/libhours-buildjson/",
 
             // function to call when the data is retrieved
             callback: processHours,
@@ -36,7 +36,7 @@ require([
         var moment_date = moment(date);
 
         // use that date to determine the monday of "this" week
-        var start_date = moment().subtract(moment_date.isoWeekday()-1, 'days');
+        var start_date = moment().clone().subtract(moment_date.isoWeekday()-1, 'days');
 
         // array with date (using moment) for each day-of-week (dow) 0=monday, 6=sunday
         var dates_per_day = [];
@@ -86,7 +86,7 @@ require([
         // determine what date the day is
         // determine which semester that date falls in
         for (var i=0; i < 7; i++) {
-            var date = start_date.add(i, 'days');
+            var date = start_date.clone().add(i, 'days');
             
             dates_per_day.push(date);
             
@@ -110,7 +110,7 @@ require([
         _.each(data['Default Hours'].elements, function(lib) {
             for (var i=0; i < 7; i++) {
                 var library = lib.location;
-                var date = dates_per_day[i];
+                var date = dates_per_day[i].format('MM/DD/YYYY');
                 var day_name = names_per_day[i];
                 var semester = semester_per_day[i].semestername;
 
