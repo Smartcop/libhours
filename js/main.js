@@ -36,7 +36,7 @@ require([
         var moment_date = moment(date);
 
         // use that date to determine the monday of "this" week
-        var start_date = moment().clone().subtract(moment_date.isoWeekday()-1, 'days');
+        var start_date = moment_date.clone().subtract(moment_date.isoWeekday()-1, 'days');
 
         // array with date (using moment) for each day-of-week (dow) 0=monday, 6=sunday
         var dates_per_day = [];
