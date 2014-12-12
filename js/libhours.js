@@ -45,9 +45,25 @@ function buildCompleteHoursObject(data, date) {
     var hours = {};
 
     // exceptions must be accessed by date, then location
-    _.each(data['Holidays and Special Hours'].elements, function(exception) {
-        exceptions[exception.date] = exceptions[exception.date] || {};
-        exceptions[exception.date][exception.library] = exception;
+    // we have to do some strange iterations because of the format 
+    // of the spreadsheet
+
+    // skip first column name ("location"), it's not needed for processing, just for human editing
+    _.each(data['Holidays and Special Hours'].column_names.slice(1), function(exception_name) {
+        // iterate through each library, creating an object for each
+        // where the key is the location name, and the value is an object
+        // each object should contain key/value pairs of date => hours
+        // skip the first row of elements, because that just holds the dates themselves
+        _.each(data['Holidays and Special Hours'].elements.slice(1), function(library) {
+            exceptions[library.location] = exceptions[library.location] || {};
+
+            // make sure there's an exception for this particular library for this exception name
+            if (library[exception_name]) {
+                var exception_date = data['Holidays and Special Hours'].elements[0][exception_name];
+
+                exceptions[library.location][exception_date] = library[exception_name];
+            }
+        });
     });
 
     // hours_data must be access by semester, then location, then by day
@@ -87,7 +103,7 @@ function buildCompleteHoursObject(data, date) {
                 // check date against lib exceptions list
                 // check against lib tab hours
                 // if no exceptions and no lib tab, use default hours from default hours object
-    _.each(data['Default Hours'].elements, function(lib) {
+    _.each(data['Holidays and Special Hours'].elements.slice(1), function(lib) {
         for (var i=0; i < 7; i++) {
             var library = lib.location;
             var date = dates_per_day[i].format('MM/DD/YYYY');
@@ -96,14 +112,14 @@ function buildCompleteHoursObject(data, date) {
 
             hours[library] = hours[library] || {};
 
-            if (exceptions[date] && exceptions[date][library]) {
-                hours[library][i] = exceptions[date][library].hours;
+            if (exceptions[library] && exceptions[library][date]) {
+                hours[library][i] = exceptions[library][date];
             }
             else if (hours_data[semester] && hours_data[semester][library] && hours_data[semester][library][day_name]) {
                 hours[library][i] = hours_data[semester][library][day_name];
             }
             else {
-                hours[library][i] = lib[day_name];
+                hours[library][i] = 'TBA';
             }
         }
     });
