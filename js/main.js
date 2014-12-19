@@ -27,8 +27,6 @@ window.onload = function() {
         // function to call when the data is retrieved
         callback: processHours,
 
-        cachebuster: true,
-
         simpleSheet: false
     });
 }

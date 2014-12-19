@@ -233,9 +233,8 @@
         script.src = this.parameterize + encodeURIComponent(script.src);
       }
 
-      if (this.cachebuster) {
-          script.src += "?v="+ Math.floor(Math.random()*10000000001); 
-      }
+      //cachebusting
+      script.src += "?v="+ Math.floor(Math.random()*10000000001);
       
       document.getElementsByTagName('script')[0].parentNode.appendChild(script);
     },
