@@ -106,7 +106,7 @@ function buildCompleteHoursObject(data, date) {
     _.each(data['Holidays and Special Hours'].elements.slice(1), function(lib) {
         for (var i=0; i < 7; i++) {
             var library = lib.location;
-            var date = dates_per_day[i].format('MM/DD/YYYY');
+            var date = dates_per_day[i].format('M/D/YYYY');
             var day_name = names_per_day[i];
             var semester = semester_per_day[i].semestername;
 
