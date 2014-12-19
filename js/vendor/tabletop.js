@@ -69,6 +69,7 @@
     this.singleton = !!options.singleton;
     this.simple_url = !!options.simple_url;
     this.callbackContext = options.callbackContext;
+    this.cachebuster = options.cachebuster;
     
     if(typeof(options.proxy) !== 'undefined') {
       // Remove trailing slash, it will break the app
@@ -230,6 +231,10 @@
       
       if (this.parameterize) {
         script.src = this.parameterize + encodeURIComponent(script.src);
+      }
+
+      if (this.cachebuster) {
+          script.src += "?v="+ Math.floor(Math.random()*10000000001); 
       }
       
       document.getElementsByTagName('script')[0].parentNode.appendChild(script);
