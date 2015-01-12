@@ -127,14 +127,6 @@ function buildCompleteHoursObject(data, date) {
     return hours;
 }
 
-// yes, this is monumentally stupid.
-// this is purely to give us something to use while testing
-function buildSingleHoursObject(data, date, libname) {
-    var completeHoursObject = buildCompleteHoursObject(data, date);
-
-    return completeHoursObject[libname][moment(date).isoWeekday()-1];
-}
-
 function getSingleHoursObject(completeHoursObject, date, libname) {
     return completeHoursObject[libname][moment(date).isoWeekday()-1];
 }
