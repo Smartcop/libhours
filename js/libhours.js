@@ -1,6 +1,6 @@
 // takes in the complete data object from the google doc/json file(s)
 // and a js date object
-// returns a hash (object) of librarys
+// returns a hash (object) of libraries
 // library object key is the library name
 // library object value is an array of 7 "hours" strings
 // each of the 7 corresponds to a day-of-the-week (0=monday, 6=sunday)
@@ -132,5 +132,9 @@ function buildCompleteHoursObject(data, date) {
 function buildSingleHoursObject(data, date, libname) {
     var completeHoursObject = buildCompleteHoursObject(data, date);
 
+    return completeHoursObject[libname][moment(date).isoWeekday()-1];
+}
+
+function getSingleHoursObject(completeHoursObject, date, libname) {
     return completeHoursObject[libname][moment(date).isoWeekday()-1];
 }

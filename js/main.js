@@ -3,14 +3,13 @@ function processHours(data, tabletop) {
     // get page_date however you want, I'm just defaulting to new Date
     var date = new Date(2014, 11, 31);
 
-    // all libs/entire week
+    // only build the hours object once
     var completeHoursObject = buildCompleteHoursObject(data, date);
 
-    // do something with the json object. for now, I console log it.
     console.log(completeHoursObject);
 
-    // single lib/one day
-    var singleHoursObject = buildSingleHoursObject(data, date, 'Barker Library')
+    // extract the hours for a particular date/lib from the complete object this way
+    var singleHoursObject = getSingleHoursObject(completeHoursObject, date, 'Barker Library')
 
     console.log(singleHoursObject);
 }
