@@ -140,7 +140,8 @@ function getSemester(data) {
         var singlelibrarydate = {};
         var closed = [];
         var exceptions = [];
-        var before_date;
+        var closed_before_date;
+        var exceptions_before_date;
 
 
          _.each(data['Holidays and Special Hours'].column_names.slice(1), function(exception_name) {
@@ -151,11 +152,11 @@ function getSemester(data) {
 
                 if (library[exception_name] == 'closed') {
                     
-                    if (before_date) {
+                    if (closed_before_date) {
                     
                         var today_date = exception_date;
                         
-                        if(moment(today_date).isSame(moment(before_date).add(1, 'day'))) {
+                        if (moment(today_date).isSame(moment(closed_before_date).add(1, 'day'))) {
                            
                             var singleClosing = closed.pop();
 
@@ -186,9 +187,82 @@ function getSemester(data) {
                         singleClosing['reason'] = exception_name;
                         closed.push(singleClosing);
                     }
-                        before_date = exception_date;
 
+                    closed_before_date = exception_date;
+                
                 } else {
+
+                    if (exceptions_before_date) {
+
+                        var today_date = exception_date;
+
+                        if (moment(today_date).isSame(moment(exceptions_before_date).add(1, 'day'))) {
+
+                            var hours = {};
+                            var splithours = library[exception_name].split("-");
+
+                            hours['start'] = splithours[0];
+                            hours['end'] = splithours[1];
+
+                            var singleClosing = exceptions.pop();
+
+                            var newHours = singleClosing['hours'];
+
+                            if (newHours['start'] == hours['start'] && newHours['end'] == hours['end']) {
+
+                                var dates = singleClosing['dates'];
+                                dates['end'] = today_date;
+                                singleClosing['dates'] = dates;
+
+                                exceptions.push(singleClosing);
+
+                            } else {
+
+                                exceptions.push(singleClosing);
+                                
+                                var dates = {};
+                                dates['start'] = exception_date;
+                                dates['end'] = exception_date;
+
+                                var singleClosing = {};                        
+                                singleClosing['dates'] = dates;
+                                singleClosing['reason'] = exception_name;
+
+                                var hours = {};
+                                var splithours = library[exception_name].split("-");
+
+                                hours['start'] = splithours[0];
+                                hours['end'] = splithours[1];
+
+                                singleClosing['hours'] = hours;
+
+                                exceptions.push(singleClosing);
+
+                            }
+
+                        } else {
+
+                            var dates = {};
+                            dates['start'] = exception_date;
+                            dates['end'] = exception_date;
+
+                            var singleClosing = {};                        
+                            singleClosing['dates'] = dates;
+                            singleClosing['reason'] = exception_name;
+
+                            var hours = {};
+                            var splithours = library[exception_name].split("-");
+
+                            hours['start'] = splithours[0];
+                            hours['end'] = splithours[1];
+
+                            singleClosing['hours'] = hours;
+
+                            exceptions.push(singleClosing);
+
+                        }
+
+                    } else {
 
                         var dates = {};
                         dates['start'] = exception_date;
@@ -197,7 +271,6 @@ function getSemester(data) {
                         var singleClosing = {};                        
                         singleClosing['dates'] = dates;
                         singleClosing['reason'] = exception_name;
-
 
                         var hours = {};
                         var splithours = library[exception_name].split("-");
@@ -208,6 +281,11 @@ function getSemester(data) {
                         singleClosing['hours'] = hours;
 
                         exceptions.push(singleClosing);
+
+                    }
+
+                    exceptions_before_date = exception_date;
+
                 }
 
             }
