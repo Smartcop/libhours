@@ -158,34 +158,21 @@ function getSemester(data) {
                         
                         if (moment(today_date).isSame(moment(closed_before_date).add(1, 'day'))) {
                            
-                            var singleClosing = closed.pop();
-
-                            var dates = singleClosing['dates'];
+                            var singleException = closed.pop();
+                            var dates = singleException['dates'];
                             dates['end'] = today_date
+                            closed.push(singleException);
 
-                            closed.push(singleClosing);
                         } else {
                                                                       
-                            var dates = {};
-                            dates['start'] = exception_date;
-                            dates['end'] = exception_date;
-                        
-                            var singleClosing = {};
-                            singleClosing['dates'] = dates;
-                            singleClosing['reason'] = exception_name;
-                            closed.push(singleClosing);
+                            closed.push(buildClosingObject(exception_date, exception_name));
+
                         }
 
                     } else {
                                                                                       
-                        var dates = {};
-                        dates['start'] = exception_date;
-                        dates['end'] = exception_date;
+                       closed.push(buildClosingObject(exception_date, exception_name));
 
-                        var singleClosing = {};                        
-                        singleClosing['dates'] = dates;
-                        singleClosing['reason'] = exception_name;
-                        closed.push(singleClosing);
                     }
 
                     closed_before_date = exception_date;
@@ -204,83 +191,35 @@ function getSemester(data) {
                             hours['start'] = splithours[0];
                             hours['end'] = splithours[1];
 
-                            var singleClosing = exceptions.pop();
+                            var singleException = exceptions.pop();
 
-                            var newHours = singleClosing['hours'];
+                            var newHours = singleException['hours'];
 
                             if (newHours['start'] == hours['start'] && newHours['end'] == hours['end']) {
 
-                                var dates = singleClosing['dates'];
+                                var dates = singleException['dates'];
                                 dates['end'] = today_date;
-                                singleClosing['dates'] = dates;
+                                singleException['dates'] = dates;
 
-                                exceptions.push(singleClosing);
+                                exceptions.push(singleException);
 
                             } else {
 
-                                exceptions.push(singleClosing);
+                                exceptions.push(singleException);
                                 
-                                var dates = {};
-                                dates['start'] = exception_date;
-                                dates['end'] = exception_date;
-
-                                var singleClosing = {};                        
-                                singleClosing['dates'] = dates;
-                                singleClosing['reason'] = exception_name;
-
-                                var hours = {};
-                                var splithours = library[exception_name].split("-");
-
-                                hours['start'] = splithours[0];
-                                hours['end'] = splithours[1];
-
-                                singleClosing['hours'] = hours;
-
-                                exceptions.push(singleClosing);
+                                exceptions.push(buildExceptionObject(exception_date, exception_name, library[exception_name]));
 
                             }
 
                         } else {
 
-                            var dates = {};
-                            dates['start'] = exception_date;
-                            dates['end'] = exception_date;
-
-                            var singleClosing = {};                        
-                            singleClosing['dates'] = dates;
-                            singleClosing['reason'] = exception_name;
-
-                            var hours = {};
-                            var splithours = library[exception_name].split("-");
-
-                            hours['start'] = splithours[0];
-                            hours['end'] = splithours[1];
-
-                            singleClosing['hours'] = hours;
-
-                            exceptions.push(singleClosing);
+                            exceptions.push(buildExceptionObject(exception_date, exception_name, library[exception_name]));
 
                         }
 
                     } else {
 
-                        var dates = {};
-                        dates['start'] = exception_date;
-                        dates['end'] = exception_date;
-
-                        var singleClosing = {};                        
-                        singleClosing['dates'] = dates;
-                        singleClosing['reason'] = exception_name;
-
-                        var hours = {};
-                        var splithours = library[exception_name].split("-");
-
-                        hours['start'] = splithours[0];
-                        hours['end'] = splithours[1];
-
-                        singleClosing['hours'] = hours;
-
-                        exceptions.push(singleClosing);
+                        exceptions.push(buildExceptionObject(exception_date, exception_name, library[exception_name]));
 
                     }
 
@@ -301,3 +240,37 @@ function getSemester(data) {
     return librarydates;
 
 }
+
+function buildClosingObject(exception_date, exception_name) {
+
+    var dates = {};
+    dates['start'] = exception_date;
+    dates['end'] = exception_date;
+
+    var singleClosing = {};
+    singleClosing['dates'] = dates;
+    singleClosing['reason'] = exception_name;
+    return singleClosing;
+}
+
+function buildExceptionObject(exception_date, exception_name, splithours) {
+
+    var dates = {};
+    dates['start'] = exception_date;
+    dates['end'] = exception_date;
+
+    var singleException = {};                        
+    singleException['dates'] = dates;
+    singleException['reason'] = exception_name;
+
+    var hours = {};
+    splithours = splithours.split("-");
+
+    hours['start'] = splithours[0];
+    hours['end'] = splithours[1];
+
+    singleException['hours'] = hours;
+
+    return singleException;
+}
+
