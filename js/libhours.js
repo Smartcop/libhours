@@ -130,3 +130,59 @@ function buildCompleteHoursObject(data, date) {
 function getSingleHoursObject(completeHoursObject, date, libname) {
     return completeHoursObject[libname][moment(date).isoWeekday()-1];
 }
+
+function getSemester(data) {
+
+    var librarydates = {};
+
+    _.each(data['Holidays and Special Hours'].elements.slice(1), function(library) {
+
+        var singlelibrarydate = {};
+        var closed = {};
+        var exceptions = {};
+        var before_date;
+
+
+         _.each(data['Holidays and Special Hours'].column_names.slice(1), function(exception_name) {
+
+//            document.write(exception_name + "         ");
+  //              document.write(library.location + "         ");
+
+            if (library[exception_name]) {
+
+                var exception_date = data['Holidays and Special Hours'].elements[0][exception_name];
+
+
+//document.write(data['Holidays and Special Hours'].elements[1][exception_name] + "| |" + library[exception_name] + "| |" + exception_date + "<br>");
+
+                if (library[exception_name] == 'closed') {
+                    
+                    closed[exception_date] = exception_name;
+                    
+                    if (before_date) {
+                    
+                        var today_date = exception_date;
+
+                           // document.write(today_date + " " + before_date + "<br>");
+                           // document.write(moment(today_date) + " " + moment(before_date).add(1, 'day') + "<br>");
+                           // document.write((moment(today_date).isSame(moment(before_date).add(1, 'day'))) + "<br><br>");
+                    }
+                   
+                    before_date = exception_date;
+                   
+                } else {
+                    exceptions[exception_date] = exception_name;
+                }
+            }
+
+        });
+        
+        singlelibrarydate['closings'] = closed;
+        singlelibrarydate['exceptions'] = exceptions;
+        librarydates[library.location] = singlelibrarydate;
+    
+    });
+
+    return librarydates;
+
+}
