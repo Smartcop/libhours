@@ -138,7 +138,7 @@ function getSemester(data) {
     _.each(data['Holidays and Special Hours'].elements.slice(1), function(library) {
 
         var singlelibrarydate = {};
-        var closed = {};
+        var closed = [];
         var exceptions = {};
         var before_date;
 
@@ -156,16 +156,22 @@ function getSemester(data) {
 //document.write(data['Holidays and Special Hours'].elements[1][exception_name] + "| |" + library[exception_name] + "| |" + exception_date + "<br>");
 
                 if (library[exception_name] == 'closed') {
-                    
-                    closed[exception_date] = exception_name;
+
+                    var singleClosing = {};
+                    singleClosing['start'] = exception_date;
+                    singleClosing['end'] = exception_date;
+                    singleClosing['reason'] = exception_name;
+                    closed.push(singleClosing);
+
+                  //  closed[exception_date] = exception_name;
                     
                     if (before_date) {
                     
                         var today_date = exception_date;
 
-                           // document.write(today_date + " " + before_date + "<br>");
-                           // document.write(moment(today_date) + " " + moment(before_date).add(1, 'day') + "<br>");
-                           // document.write((moment(today_date).isSame(moment(before_date).add(1, 'day'))) + "<br><br>");
+                            //document.write(today_date + " " + before_date + "<br>");
+                            //document.write(moment(today_date) + " " + moment(before_date).add(1, 'day') + "<br>");
+                            //document.write((moment(today_date).isSame(moment(before_date).add(1, 'day'))) + "<br><br>");
                     }
                    
                     before_date = exception_date;
