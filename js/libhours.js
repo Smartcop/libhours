@@ -139,46 +139,77 @@ function getSemester(data) {
 
         var singlelibrarydate = {};
         var closed = [];
-        var exceptions = {};
+        var exceptions = [];
         var before_date;
 
 
          _.each(data['Holidays and Special Hours'].column_names.slice(1), function(exception_name) {
 
-//            document.write(exception_name + "         ");
-  //              document.write(library.location + "         ");
-
             if (library[exception_name]) {
 
                 var exception_date = data['Holidays and Special Hours'].elements[0][exception_name];
 
-
-//document.write(data['Holidays and Special Hours'].elements[1][exception_name] + "| |" + library[exception_name] + "| |" + exception_date + "<br>");
-
                 if (library[exception_name] == 'closed') {
-
-                    var singleClosing = {};
-                    singleClosing['start'] = exception_date;
-                    singleClosing['end'] = exception_date;
-                    singleClosing['reason'] = exception_name;
-                    closed.push(singleClosing);
-
-                  //  closed[exception_date] = exception_name;
                     
                     if (before_date) {
                     
                         var today_date = exception_date;
+                        
+                        if(moment(today_date).isSame(moment(before_date).add(1, 'day'))) {
+                           
+                            var singleClosing = closed.pop();
 
-                            //document.write(today_date + " " + before_date + "<br>");
-                            //document.write(moment(today_date) + " " + moment(before_date).add(1, 'day') + "<br>");
-                            //document.write((moment(today_date).isSame(moment(before_date).add(1, 'day'))) + "<br><br>");
+                            var dates = singleClosing['dates'];
+                            dates['end'] = today_date
+
+                            closed.push(singleClosing);
+                        } else {
+                                                                      
+                            var dates = {};
+                            dates['start'] = exception_date;
+                            dates['end'] = exception_date;
+                        
+                            var singleClosing = {};
+                            singleClosing['dates'] = dates;
+                            singleClosing['reason'] = exception_name;
+                            closed.push(singleClosing);
+                        }
+
+                    } else {
+                                                                                      
+                        var dates = {};
+                        dates['start'] = exception_date;
+                        dates['end'] = exception_date;
+
+                        var singleClosing = {};                        
+                        singleClosing['dates'] = dates;
+                        singleClosing['reason'] = exception_name;
+                        closed.push(singleClosing);
                     }
-                   
-                    before_date = exception_date;
-                   
+                        before_date = exception_date;
+
                 } else {
-                    exceptions[exception_date] = exception_name;
+
+                        var dates = {};
+                        dates['start'] = exception_date;
+                        dates['end'] = exception_date;
+
+                        var singleClosing = {};                        
+                        singleClosing['dates'] = dates;
+                        singleClosing['reason'] = exception_name;
+
+
+                        var hours = {};
+                        var splithours = library[exception_name].split("-");
+
+                        hours['start'] = splithours[0];
+                        hours['end'] = splithours[1];
+
+                        singleClosing['hours'] = hours;
+
+                        exceptions.push(singleClosing);
                 }
+
             }
 
         });
