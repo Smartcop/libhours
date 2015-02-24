@@ -1,22 +1,17 @@
 // what to do with the hoursObject once it's been built
 function processHours(data, tabletop) {
     // get page_date however you want, I'm just defaulting to new Date
-    var date = new Date(2015, 11, 31);
 
-    // only build the hours object once
-    var completeHoursObject = buildCompleteHoursObject(data, date);
+    var date = new Date(2015, 1, 28);
+    var moment_date = moment(date);
 
-    console.log(completeHoursObject);
-
-    // extract the hours for a particular date/lib from the complete object this way
-    var singleHoursObject = getSingleHoursObject(completeHoursObject, date, 'Barker Library')
-
-    console.log(singleHoursObject);
+    var object = buildNormalHoursObject(data, date, "Barker Library");
+    document.write(JSON.stringify(object));
 }
 
 function processSemester(data, tabletop) {
    
-   var completeHoursObject = getSemester(data);
+    var completeHoursObject = getSemester(data);
     document.write(JSON.stringify(completeHoursObject));
 }
 
@@ -27,8 +22,8 @@ window.onload = function() {
         key: '1aEV-CZIqJD9hHJWNWTWIN0I4Cgz3M8jpl4hQwA9l8JU',
 
         // function to call when the data is retrieved
-        //callback: processHours,
-        callback: processSemester,
+        callback: processHours,
+        //callback: processSemester,
 
         simpleSheet: false
     });

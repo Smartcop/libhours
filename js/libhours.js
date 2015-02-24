@@ -14,6 +14,7 @@ function buildCompleteHoursObject(data, date) {
 
     // use that date to determine the monday of "this" week
     // clone insures we don't alter the original
+
     var start_date = moment_date.clone().subtract(moment_date.isoWeekday()-1, 'days');
 
     // array with date (using moment) for each day-of-week (dow) 0=monday, 6=sunday
@@ -127,7 +128,95 @@ function buildCompleteHoursObject(data, date) {
     return hours;
 }
 
+function buildNormalHoursObject(data, date, library) {
+    // moment will accept lots of different date formats
+    var moment_date = moment(date);
+
+    // use that date to determine the monday of "this" week
+    // clone insures we don't alter the original
+
+    var start_date = moment_date.clone().subtract(moment_date.isoWeekday()-1, 'days');
+
+    // array with date (using moment) for each day-of-week (dow) 0=monday, 6=sunday
+    var dates_per_day = [];
+
+    // array with name of day for each dow
+    // this is needed because we need the spreadsheet to be human-readable
+    var names_per_day = [
+        'monday',
+        'tuesday',
+        'wednesday',
+        'thursday',
+        'friday',
+        'saturday',
+        'sunday'
+    ];
+
+    // hash of hours broken down by semester, location, day
+    var hours_data = {};
+
+    // array of semester for each dow--in case the semester changes in the middle of the week
+    var semester_per_day = [];
+
+    // hash of hours data for "this" week
+    var hours = {};
+
+    // hours_data must be access by semester, then location, then by day
+    _.each(data['Semester Breakdown'].elements, function(semester) {
+        hours_data[semester.semestername] = {};
+
+        if (data[semester.semestername]) {
+            _.each(data[semester.semestername].elements, function(location) {
+                hours_data[semester.semestername][location.location] = location;
+            });
+        }
+    });
+
+    // run through each DOW for "this" week
+    // determine what date the day is
+    // determine which semester that date falls in
+    // this is in case a semester changes in the middle of a week (is that possible?)
+    for (var i=0; i < 7; i++) {
+        var date = start_date.clone().add(i, 'days');
+        
+        dates_per_day.push(date);
+        
+        semester_per_day.push(_.find(data['Semester Breakdown'].elements, function(semester) {
+            if (    date.isSame(semester.start, 'day') ||
+                    date.isSame(semester.end, 'day') ||
+                    (   date.isAfter(semester.start, 'day') &&
+                        date.isBefore(semester.end, 'day'))) {
+                return semester.semestername;
+            }
+        }));
+    }
+
+    // build hash of arrays (weekly hours) for display in template
+    // lib name as key, value as array of hours for each DOW
+    // for each DOW 
+    // check against lib tab hours
+        
+    var dayLetters = ['M','T','W','R','F','S','U'];
+
+    for (var i=0; i < 7; i++) {
+        var date = dates_per_day[i].format('M/D/YYYY');
+        var day_name = names_per_day[i];
+        document.write(date + "<br>");
+        var semester = semester_per_day[i].semestername;
+
+        if (hours_data[semester] && hours_data[semester][library] && hours_data[semester][library][day_name]) {
+            hours[dayLetters[i]] = hours_data[semester][library][day_name];
+        }
+        else {
+            hours[dayLetters[i]] = 'TBA';
+        }
+    }
+
+    return hours;
+}
+
 function getSingleHoursObject(completeHoursObject, date, libname) {
+
     return completeHoursObject[libname][moment(date).isoWeekday()-1];
 }
 
