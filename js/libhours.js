@@ -158,8 +158,8 @@ function buildNormalHoursObject(data, date, library) {
     // array of semester for each dow--in case the semester changes in the middle of the week
     var semester_per_day = [];
 
-    // hash of hours data for "this" week
-    var hours = {};
+    // array of hours data for "this" week
+    var hours = [];
 
     // hours_data must be access by semester, then location, then by day
     _.each(data['Semester Breakdown'].elements, function(semester) {
@@ -201,14 +201,38 @@ function buildNormalHoursObject(data, date, library) {
     for (var i=0; i < 7; i++) {
         var date = dates_per_day[i].format('M/D/YYYY');
         var day_name = names_per_day[i];
-        document.write(date + "<br>");
         var semester = semester_per_day[i].semestername;
 
+        var hoursObject = {};
+
         if (hours_data[semester] && hours_data[semester][library] && hours_data[semester][library][day_name]) {
-            hours[dayLetters[i]] = hours_data[semester][library][day_name];
-        }
-        else {
-            hours[dayLetters[i]] = 'TBA';
+
+            var dayHours = {};
+            var splithours = hours_data[semester][library][day_name].split("-");
+            dayHours['start'] = splithours[0];
+            dayHours['end'] = splithours[1];
+
+            if (hours.length) {
+                var poppedHoursObject = hours.pop();
+                var poppedHours = poppedHoursObject['hours'];
+                if (poppedHours['start'] == dayHours['start'] && poppedHours['end'] == dayHours['end']) {
+                    poppedHoursObject['days'] = poppedHoursObject['days'].concat(dayLetters[i]);
+                    hours.push(poppedHoursObject);
+                } else {
+                    hours.push(poppedHoursObject);
+                    hoursObject['hours'] = dayHours;
+                    hoursObject['days'] = dayLetters[i];
+                    hours.push(hoursObject);
+                }
+            } else {
+                hoursObject['hours'] = dayHours;
+                hoursObject['days'] = dayLetters[i];
+                hours.push(hoursObject);
+            }
+        } else {
+            hoursObject['hours'] = "TBA";
+            hoursObject['days'] = dayLetters[i];
+            hours.push(hoursObject);
         }
     }
 
