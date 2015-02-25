@@ -5,7 +5,7 @@ function processHours(data, tabletop) {
     var date = new Date(2015, 1, 28);
     var moment_date = moment(date);
 
-    var object = buildNormalHoursObject(data, date, "Barker Library");
+    var object = buildNormalHoursObject(data, date);
     document.write(JSON.stringify(object));
 }
 

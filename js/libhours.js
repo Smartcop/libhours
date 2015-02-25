@@ -128,7 +128,7 @@ function buildCompleteHoursObject(data, date) {
     return hours;
 }
 
-function buildNormalHoursObject(data, date, library) {
+function buildNormalHoursObject(data, date) {
     // moment will accept lots of different date formats
     var moment_date = moment(date);
 
@@ -159,15 +159,16 @@ function buildNormalHoursObject(data, date, library) {
     var semester_per_day = [];
 
     // array of hours data for "this" week
-    var hours = [];
-
-    // hours_data must be access by semester, then location, then by day
+    var hours = {};
+    var libraries = [];
+    // hours_data must be access by semester, then library, then by day
     _.each(data['Semester Breakdown'].elements, function(semester) {
         hours_data[semester.semestername] = {};
 
         if (data[semester.semestername]) {
-            _.each(data[semester.semestername].elements, function(location) {
-                hours_data[semester.semestername][location.location] = location;
+            _.each(data[semester.semestername].elements, function(library) {
+                hours_data[semester.semestername][library.location] = library;
+                libraries.push(library.location);
             });
         }
     });
@@ -198,44 +199,51 @@ function buildNormalHoursObject(data, date, library) {
         
     var dayLetters = ['M','T','W','R','F','S','U'];
 
-    for (var i=0; i < 7; i++) {
-        var date = dates_per_day[i].format('M/D/YYYY');
-        var day_name = names_per_day[i];
-        var semester = semester_per_day[i].semestername;
+    for (var b = 0; b < libraries.length; b++) {
 
-        var hoursObject = {};
+        var library = libraries[b];
 
-        if (hours_data[semester] && hours_data[semester][library] && hours_data[semester][library][day_name]) {
+        //library = "Barker Library";
+        var singleHours = [];
+        for (var i = 0; i < 7; i++) {
+            var date = dates_per_day[i].format('M/D/YYYY');
+            var day_name = names_per_day[i];
+            var semester = semester_per_day[i].semestername;
 
-            var dayHours = {};
-            var splithours = hours_data[semester][library][day_name].split("-");
-            dayHours['start'] = splithours[0];
-            dayHours['end'] = splithours[1];
+            var hoursObject = {};
 
-            if (hours.length) {
-                var poppedHoursObject = hours.pop();
-                var poppedHours = poppedHoursObject['hours'];
-                if (poppedHours['start'] == dayHours['start'] && poppedHours['end'] == dayHours['end']) {
-                    poppedHoursObject['days'] = poppedHoursObject['days'].concat(dayLetters[i]);
-                    hours.push(poppedHoursObject);
+            if (hours_data[semester] && hours_data[semester][library] && hours_data[semester][library][day_name]) {
+
+                var dayHours = {};
+                var splithours = hours_data[semester][library][day_name].split("-");
+                dayHours['start'] = splithours[0];
+                dayHours['end'] = splithours[1];
+
+                if (singleHours.length) {
+                    var poppedHoursObject = singleHours.pop();
+                    var poppedHours = poppedHoursObject['hours'];
+                    if (poppedHours['start'] == dayHours['start'] && poppedHours['end'] == dayHours['end']) {
+                        poppedHoursObject['days'] = poppedHoursObject['days'].concat(dayLetters[i]);
+                        singleHours.push(poppedHoursObject);
+                    } else {
+                        singleHours.push(poppedHoursObject);
+                        hoursObject['hours'] = dayHours;
+                        hoursObject['days'] = dayLetters[i];
+                        singleHours.push(hoursObject);
+                    }
                 } else {
-                    hours.push(poppedHoursObject);
                     hoursObject['hours'] = dayHours;
                     hoursObject['days'] = dayLetters[i];
-                    hours.push(hoursObject);
+                    singleHours.push(hoursObject);
                 }
             } else {
-                hoursObject['hours'] = dayHours;
+                hoursObject['hours'] = "TBA";
                 hoursObject['days'] = dayLetters[i];
-                hours.push(hoursObject);
+                singleHours.push(hoursObject);
             }
-        } else {
-            hoursObject['hours'] = "TBA";
-            hoursObject['days'] = dayLetters[i];
-            hours.push(hoursObject);
         }
+        hours[library] = singleHours;
     }
-
     return hours;
 }
 
