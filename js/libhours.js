@@ -90,32 +90,34 @@ function getSemester(hours_data, data) {
                                         
                    var today_date = exception_date;
 
-                    if (closed_before_date) {
-                    
-                        while (true) {
-                            if (semester >= hours_data[library.location].length) {
-                                break;
-                            }
-                            var start_date = moment(hours_data[library.location][semester]['dates']['start']);
-                            var end_date = moment(hours_data[library.location][semester]['dates']['end']);
-                            var today_date2 = moment(today_date);
-
-                            if (today_date2.isSame(start_date, 'day') ||
-                                today_date2.isSame(end_date, 'day') ||
-                                (today_date2.isAfter(start_date, 'day') &&
-                                today_date2.isBefore(end_date, 'day'))) {
-
-                                break;
-
-                            } else {
-                                hours_data[library.location][semester]['closings'] = closed;
-                                hours_data[library.location][semester]['exceptions'] = exceptions;
-
-                                closed = [];
-                                exceptions = [];
-                                semester++;
-                            }
+                    while (true) {
+                        if (semester >= hours_data[library.location].length) {
+                            break;
                         }
+                        var start_date = moment(hours_data[library.location][semester]['dates']['start']);
+                        var end_date = moment(hours_data[library.location][semester]['dates']['end']);
+                        var today_date2 = moment(today_date);
+
+                        if (today_date2.isSame(start_date, 'day') ||
+                            today_date2.isSame(end_date, 'day') ||
+                            (today_date2.isAfter(start_date, 'day') &&
+                            today_date2.isBefore(end_date, 'day'))) {
+
+                            break;
+
+                        } else {
+                            hours_data[library.location][semester]['closings'] = closed;
+                            hours_data[library.location][semester]['exceptions'] = exceptions;
+
+                            closed = [];
+                            exceptions = [];
+                            semester++;
+                            closed_before_date = 0;
+                            exceptions_before_date = 0;
+                        }
+                    }
+
+                    if (closed_before_date) {
 
                         if (moment(today_date).isSame(moment(closed_before_date).add(1, 'day'))) {
                            
@@ -140,35 +142,37 @@ function getSemester(hours_data, data) {
                 
                 } else {
 
-                    if (exceptions_before_date) {
+                    var today_date = exception_date;
 
-                        var today_date = exception_date;
-
-                        while (true) {
-                            if (semester >= hours_data[library.location].length) {
-                                break;
-                            }
-                            var start_date = moment(hours_data[library.location][semester]['dates']['start']);
-                            var end_date = moment(hours_data[library.location][semester]['dates']['end']);
-                            var today_date2 = moment(today_date);
-
-                            if (today_date2.isSame(start_date, 'day') ||
-                                today_date2.isSame(end_date, 'day') ||
-                                (today_date2.isAfter(start_date, 'day') &&
-                                today_date2.isBefore(end_date, 'day'))) {
-
-                                break;
-
-                            } else {
-
-                                hours_data[library.location][semester]['closings'] = closed;
-                                hours_data[library.location][semester]['exceptions'] = exceptions;
-
-                                closed = [];
-                                exceptions = [];
-                                semester++;
-                            }
+                    while (true) {
+                        if (semester >= hours_data[library.location].length) {
+                            break;
                         }
+                        var start_date = moment(hours_data[library.location][semester]['dates']['start']);
+                        var end_date = moment(hours_data[library.location][semester]['dates']['end']);
+                        var today_date2 = moment(today_date);
+
+                        if (today_date2.isSame(start_date, 'day') ||
+                            today_date2.isSame(end_date, 'day') ||
+                            (today_date2.isAfter(start_date, 'day') &&
+                            today_date2.isBefore(end_date, 'day'))) {
+
+                            break;
+
+                        } else {
+
+                            hours_data[library.location][semester]['closings'] = closed;
+                            hours_data[library.location][semester]['exceptions'] = exceptions;
+
+                            closed = [];
+                            exceptions = [];
+                            semester++;
+                            closed_before_date = 0;
+                            exceptions_before_date = 0;
+                        }
+                    }
+
+                    if (exceptions_before_date) {
 
                         if (moment(today_date).isSame(moment(exceptions_before_date).add(1, 'day'))) {
 
