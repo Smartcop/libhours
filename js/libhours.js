@@ -361,7 +361,40 @@ function getSemester(hours_data, data) {
     });
 
     return hours_data;
+}
 
+function convertReasons(object, data) {
+
+    var exception_names_pass_one = {};
+    var exception_names_pass_two = {};
+
+    _.each(data['Holidays and Special Hours'].original_columns.slice(1), function(exception_name) {
+
+        exception_names_pass_one[exception_name] = exception_name.split("_")[0];
+    });
+
+    _.each(data['Holidays and Special Hours'].column_names.slice(1), function(exception_name) {
+
+        if (exception_names_pass_one[exception_name.replace(/[^\w]/g,'').toLowerCase()]) {
+            exception_names_pass_two[exception_name.replace(/[^\w]/g,'').toLowerCase()] = exception_name;
+        }
+    });
+
+    _.each(object, function(library) {
+        _.each(library, function(term) {
+            _.each(term['closings'], function(closing) {
+
+               closing['reason'] = exception_names_pass_two[closing['reason']];
+
+            });
+            _.each(term['exceptions'], function(exception) {
+
+               exception['reason'] = exception_names_pass_two[exception['reason']];
+
+            });
+        });
+    });
+    return(object);
 }
 
 function buildClosingObject(exception_date, exception_name) {
