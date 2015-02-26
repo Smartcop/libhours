@@ -1,11 +1,7 @@
 // what to do with the hoursObject once it's been built
 function processHours(data, tabletop) {
-    // get page_date however you want, I'm just defaulting to new Date
 
-    var date = new Date(2015, 1, 28);
-    var moment_date = moment(date);
-
-    var object = buildNormalHoursObject(data, date);
+    var object = buildNormalHoursObject(data);
     document.write(JSON.stringify(object));
 }
 

@@ -128,94 +128,41 @@ function buildCompleteHoursObject(data, date) {
     return hours;
 }
 
-function buildNormalHoursObject(data, date) {
-    // moment will accept lots of different date formats
-    var moment_date = moment(date);
+function buildNormalHoursObject(data) {
 
-    // use that date to determine the monday of "this" week
-    // clone insures we don't alter the original
-
-    var start_date = moment_date.clone().subtract(moment_date.isoWeekday()-1, 'days');
-
-    // array with date (using moment) for each day-of-week (dow) 0=monday, 6=sunday
-    var dates_per_day = [];
-
-    // array with name of day for each dow
-    // this is needed because we need the spreadsheet to be human-readable
-    var names_per_day = [
-        'monday',
-        'tuesday',
-        'wednesday',
-        'thursday',
-        'friday',
-        'saturday',
-        'sunday'
-    ];
-
-    // hash of hours broken down by semester, location, day
     var hours_data = {};
 
-    // array of semester for each dow--in case the semester changes in the middle of the week
-    var semester_per_day = [];
-
-    // array of hours data for "this" week
-    var hours = {};
-    var libraries = [];
-    // hours_data must be access by semester, then library, then by day
     _.each(data['Semester Breakdown'].elements, function(semester) {
-        hours_data[semester.semestername] = {};
+       
+        var dateOjbect = {};
+        dateOjbect['start'] = semester.start;
+        dateOjbect['end'] = semester.end;
 
         if (data[semester.semestername]) {
             _.each(data[semester.semestername].elements, function(library) {
-                hours_data[semester.semestername][library.location] = library;
-                libraries.push(library.location);
-            });
-        }
-    });
 
-    // run through each DOW for "this" week
-    // determine what date the day is
-    // determine which semester that date falls in
-    // this is in case a semester changes in the middle of a week (is that possible?)
-    for (var i=0; i < 7; i++) {
-        var date = start_date.clone().add(i, 'days');
-        
-        dates_per_day.push(date);
-        
-        semester_per_day.push(_.find(data['Semester Breakdown'].elements, function(semester) {
-            if (    date.isSame(semester.start, 'day') ||
-                    date.isSame(semester.end, 'day') ||
-                    (   date.isAfter(semester.start, 'day') &&
-                        date.isBefore(semester.end, 'day'))) {
-                return semester.semestername;
-            }
-        }));
-    }
-
-    // build hash of arrays (weekly hours) for display in template
-    // lib name as key, value as array of hours for each DOW
-    // for each DOW 
-    // check against lib tab hours
-        
-    var dayLetters = ['M','T','W','R','F','S','U'];
-
-    for (var b = 0; b < libraries.length; b++) {
-
-        var library = libraries[b];
-
-        //library = "Barker Library";
-        var singleHours = [];
-        for (var i = 0; i < 7; i++) {
-            var date = dates_per_day[i].format('M/D/YYYY');
-            var day_name = names_per_day[i];
-            var semester = semester_per_day[i].semestername;
+            var termObject = {};
+            termObject['name'] = semester.semestername;
+            termObject['dates'] = dateOjbect;
 
             var hoursObject = {};
-
-            if (hours_data[semester] && hours_data[semester][library] && hours_data[semester][library][day_name]) {
+            var singleHours = [];
+            var dayLetters = ['M','T','W','R','F','S','U'];
+            var names_per_day = [
+                'monday',
+                'tuesday',
+                'wednesday',
+                'thursday',
+                'friday',
+                'saturday',
+                'sunday'
+            ];
+            for(var i = 0 ; i < names_per_day.length ; i++) {
 
                 var dayHours = {};
-                var splithours = hours_data[semester][library][day_name].split("-");
+                var hoursObject = {};
+                var splithours = library[names_per_day[i]].split("-");
+
                 dayHours['start'] = splithours[0];
                 dayHours['end'] = splithours[1];
 
@@ -236,15 +183,21 @@ function buildNormalHoursObject(data, date) {
                     hoursObject['days'] = dayLetters[i];
                     singleHours.push(hoursObject);
                 }
-            } else {
-                hoursObject['hours'] = "TBA";
-                hoursObject['days'] = dayLetters[i];
-                singleHours.push(hoursObject);
             }
+
+            var regularHours = hours_data[library.location];
+            if (!regularHours) {
+                regularHours = [];
+            }
+            termObject['regular'] = singleHours;
+
+            regularHours.push(termObject);
+            hours_data[library.location] = regularHours;
+            });
         }
-        hours[library] = singleHours;
-    }
-    return hours;
+    });
+
+    return hours_data;
 }
 
 function getSingleHoursObject(completeHoursObject, date, libname) {
