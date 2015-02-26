@@ -1,14 +1,8 @@
 // what to do with the hoursObject once it's been built
-function processHours(data, tabletop) {
+function processTerms(data, tabletop) {
 
     var object = buildNormalHoursObject(data);
     document.write(JSON.stringify(object));
-}
-
-function processSemester(data, tabletop) {
-   
-    var completeHoursObject = getSemester(data);
-    document.write(JSON.stringify(completeHoursObject));
 }
 
 window.onload = function() {
@@ -18,8 +12,8 @@ window.onload = function() {
         key: '1aEV-CZIqJD9hHJWNWTWIN0I4Cgz3M8jpl4hQwA9l8JU',
 
         // function to call when the data is retrieved
-        callback: processHours,
-        //callback: processSemester,
+        //callback: processHours,
+        callback: processTerms,
 
         simpleSheet: false
     });
