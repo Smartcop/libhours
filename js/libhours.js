@@ -298,39 +298,32 @@ function getExceptionsAndClosings(librariesObjects, data) {
 
                             closed = [];
                             exceptions = [];
-                            semester++;
                             closedBeforeDate = 0;
                             exceptionsBeforeDate = 0;
+                            semester++;
                         }
                     }
 
-                    if (closedBeforeDate) {
+                    // If previous date and exception name are the same change end date 
+                    if (momentExceptionDate.isSame(moment(closedBeforeDate).add(1, 'day'))) {
+                       
+                        var singleException = closed.pop();
 
-                        // If previous date and exception name are the same change end date 
-                        if (momentExceptionDate.isSame(moment(closedBeforeDate).add(1, 'day'))) {
-                           
-                            var singleException = closed.pop();
+                        // If previous reason is same change end date
+                        if (singleException['reason'].split("_")[0] == exceptionName.split("_")[0]) {
+                            var dates = singleException['dates'];
+                            dates['end'] = exceptionDate
+                            closed.push(singleException);
 
-                            // If previous is same change end date
-                            if (singleException['reason'].split("_")[0] == exceptionName.split("_")[0]) {
-                                var dates = singleException['dates'];
-                                dates['end'] = exceptionDate
-                                closed.push(singleException);
-
-                            // Add new closing object
-                            } else {
-                                closed.push(singleException);
-                                closed.push(buildClosingObject(exceptionDate, exceptionName));
-                            }
-                            
-                        // Add new closing object
+                        // Add new closing object if not same reason
                         } else {
+                            closed.push(singleException);
                             closed.push(buildClosingObject(exceptionDate, exceptionName));
                         }
-
-                    // Add new closing object
-                    } else {                                                      
-                       closed.push(buildClosingObject(exceptionDate, exceptionName));
+                        
+                    // Add new closing object if last added closing day is not one day before current exception date
+                    } else {
+                        closed.push(buildClosingObject(exceptionDate, exceptionName));
                     }
 
                     closedBeforeDate = exceptionDate;
@@ -362,50 +355,44 @@ function getExceptionsAndClosings(librariesObjects, data) {
 
                             closed = [];
                             exceptions = [];
-                            semester++;
                             closedBeforeDate = 0;
                             exceptionsBeforeDate = 0;
+                            semester++;
                         }
                     }
 
-                    if (exceptionsBeforeDate) {
+                    // If previous date, start hours, end hours, and exception name are the same change end date 
+                    if (momentExceptionDate.isSame(moment(exceptionsBeforeDate).add(1, 'day'))) {
 
-                        // If previous date, start hours, end hours, and exception name are the same change end date 
-                        if (momentExceptionDate.isSame(moment(exceptionsBeforeDate).add(1, 'day'))) {
+                        var hours = {};
+                        var splithours = library[exceptionName].split("-");
 
-                            var hours = {};
-                            var splithours = library[exceptionName].split("-");
+                        hours['start'] = splithours[0];
+                        hours['end'] = splithours[1];
 
-                            hours['start'] = splithours[0];
-                            hours['end'] = splithours[1];
+                        var singleException = exceptions.pop();
 
-                            var singleException = exceptions.pop();
+                        var newHours = singleException['hours'];
+                        // If previous is same change end date
+                        if (newHours['start'] == hours['start'] && newHours['end'] == hours['end'] && singleException['reason'].split("_")[0] == exceptionName.split("_")[0]) {
 
-                            var newHours = singleException['hours'];
-                            // If previous is same change end date
-                            if (newHours['start'] == hours['start'] && newHours['end'] == hours['end'] && singleException['reason'].split("_")[0] == exceptionName.split("_")[0]) {
+                            var dates = singleException['dates'];
+                            dates['end'] = exceptionDate;
+                            singleException['dates'] = dates;
 
-                                var dates = singleException['dates'];
-                                dates['end'] = exceptionDate;
-                                singleException['dates'] = dates;
+                            exceptions.push(singleException);
 
-                                exceptions.push(singleException);
-
-                            // Add new exceptions object
-                            } else {
-                                exceptions.push(singleException);
-                                exceptions.push(buildExceptionObject(exceptionDate, exceptionName, library[exceptionName]));
-                            }
-
-                        // Add new exceptions object
+                        // Add new exceptions object if not same start/end hours or reason
                         } else {
+                            exceptions.push(singleException);
                             exceptions.push(buildExceptionObject(exceptionDate, exceptionName, library[exceptionName]));
                         }
 
-                    // Add new exceptions object
+                    // Add new closing object if last added exception day is not one day before current exception date
                     } else {
                         exceptions.push(buildExceptionObject(exceptionDate, exceptionName, library[exceptionName]));
                     }
+
                     exceptionsBeforeDate = exceptionDate;
                 }
             }
