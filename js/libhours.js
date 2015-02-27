@@ -59,7 +59,7 @@ function buildCompleteHoursObject(data, date) {
 
             // make sure there's an exception for this particular library for this exception name
             if (library[exception_name]) {
-                var exception_date = data['Holidays and Special Hours'].elements[0][exception_name];
+                var exception_date = data['Holidays and Special Hours'].elements[0][exception_name]; 
 
                 exceptions[library.location][exception_date] = library[exception_name];
             }
@@ -133,16 +133,17 @@ function getSingleHoursObject(completeHoursObject, date, libname) {
 
 function buildNormalHoursObject(data) {
 
-    var hours_data = {};
+var librariesObjects = {};
 
-    _.each(data['Semester Breakdown'].elements, function(semester) {
-       
-        var dateOjbect = {};
-        dateOjbect['start'] = semester.start;
-        dateOjbect['end'] = semester.end;
+_.each(data['Semester Breakdown'].elements, function(semester) {
+   
+    var dateOjbect = {};
+    dateOjbect['start'] = semester.start;
+    dateOjbect['end'] = semester.end;
 
-        if (data[semester.semestername]) {
-            _.each(data[semester.semestername].elements, function(library) {
+    if (data[semester.semestername]) {
+
+        _.each(data[semester.semestername].elements, function(library) {
 
             var termObject = {};
             termObject['name'] = semester.semestername;
@@ -160,154 +161,154 @@ function buildNormalHoursObject(data) {
                 'saturday',
                 'sunday'
             ];
-            for(var i = 0 ; i < names_per_day.length ; i++) {
+
+            for (var i = 0 ; i < names_per_day.length ; i++) {
 
                 var dayHours = {};
                 var hoursObject = {};
-                var splithours = library[names_per_day[i]].split("-");
+                var dayLetter = dayLetters[i];
 
+                var splithours = library[names_per_day[i]].split("-");
                 dayHours['start'] = splithours[0];
                 dayHours['end'] = splithours[1];
 
-                if (singleHours.length) {
+                if (singleHours.length > 0 ) {
                     var poppedHoursObject = singleHours.pop();
                     var poppedHours = poppedHoursObject['hours'];
                     if (poppedHours['start'] == dayHours['start'] && poppedHours['end'] == dayHours['end']) {
-                        poppedHoursObject['days'] = poppedHoursObject['days'].concat(dayLetters[i]);
+                        poppedHoursObject['days'] = poppedHoursObject['days'].concat(dayLetter);
                         singleHours.push(poppedHoursObject);
                     } else {
                         singleHours.push(poppedHoursObject);
                         hoursObject['hours'] = dayHours;
-                        hoursObject['days'] = dayLetters[i];
+                        hoursObject['days'] = dayLetter;
                         singleHours.push(hoursObject);
                     }
                 } else {
                     hoursObject['hours'] = dayHours;
-                    hoursObject['days'] = dayLetters[i];
+                    hoursObject['days'] = dayLetter;
                     singleHours.push(hoursObject);
                 }
             }
 
-            var regularHours = hours_data[library.location];
+            var regularHours = librariesObjects[library.location];
             if (!regularHours) {
                 regularHours = [];
             }
-            termObject['regular'] = singleHours;
 
+            termObject['regular'] = singleHours;
             regularHours.push(termObject);
-            hours_data[library.location] = regularHours;
+            librariesObjects[library.location] = regularHours;
+            
             });
         }
     });
 
-    return getSemester(hours_data, data);
+    return getSemester(librariesObjects, data);
 }
 
-function getSemester(hours_data, data) {
+function getSemester(librariesObjects, data) {
 
     _.each(data['Holidays and Special Hours'].elements.slice(1), function(library) {
 
         var semester = 0;
         var closed = [];
         var exceptions = [];
-        var closed_before_date;
-        var exceptions_before_date;
+        var closedBeforeDate;
+        var exceptionsBeforeDate;
+
+        var librarySemesters = librariesObjects[library.location];
 
          _.each(data['Holidays and Special Hours'].column_names.slice(1), function(exception_name) {
 
             if (library[exception_name]) {
 
-                var exception_date = data['Holidays and Special Hours'].elements[0][exception_name];
+                var exceptionDate = data['Holidays and Special Hours'].elements[0][exception_name];
+
+                var momentExceptionDate = moment(exceptionDate);
 
                 if (library[exception_name] == 'closed') {
                                         
-                   var today_date = exception_date;
-
                     while (true) {
-                        if (semester >= hours_data[library.location].length) {
+
+                        if (semester >= librarySemesters.length) {
                             break;
                         }
-                        var start_date = moment(hours_data[library.location][semester]['dates']['start']);
-                        var end_date = moment(hours_data[library.location][semester]['dates']['end']);
-                        var today_date2 = moment(today_date);
 
-                        if (today_date2.isSame(start_date, 'day') ||
-                            today_date2.isSame(end_date, 'day') ||
-                            (today_date2.isAfter(start_date, 'day') &&
-                            today_date2.isBefore(end_date, 'day'))) {
+                        var startDate = moment(librarySemesters[semester]['dates']['start']);
+                        var endDate = moment(librarySemesters[semester]['dates']['end']);
 
+                        if  (momentExceptionDate.isSame(startDate, 'day') || momentExceptionDate.isSame(endDate, 'day') ||
+                            (momentExceptionDate.isAfter(startDate, 'day') && momentExceptionDate.isBefore(endDate, 'day'))) {
+                            
                             break;
 
                         } else {
-                            hours_data[library.location][semester]['closings'] = closed;
-                            hours_data[library.location][semester]['exceptions'] = exceptions;
+
+                            librarySemesters[semester]['closings'] = closed;
+                            librarySemesters[semester]['exceptions'] = exceptions;
 
                             closed = [];
                             exceptions = [];
                             semester++;
-                            closed_before_date = 0;
-                            exceptions_before_date = 0;
+                            closedBeforeDate = 0;
+                            exceptionsBeforeDate = 0;
                         }
                     }
 
-                    if (closed_before_date) {
+                    if (closedBeforeDate) {
 
-                        if (moment(today_date).isSame(moment(closed_before_date).add(1, 'day'))) {
+                        if (momentExceptionDate.isSame(moment(closedBeforeDate).add(1, 'day'))) {
                            
                             var singleException = closed.pop();
                             var dates = singleException['dates'];
-                            dates['end'] = today_date
+                            dates['end'] = exceptionDate
                             closed.push(singleException);
 
                         } else {
                                                                       
-                            closed.push(buildClosingObject(exception_date, exception_name));
-
+                            closed.push(buildClosingObject(exceptionDate, exception_name));
                         }
 
                     } else {
                                                                                       
-                       closed.push(buildClosingObject(exception_date, exception_name));
-
+                       closed.push(buildClosingObject(exceptionDate, exception_name));
                     }
 
-                    closed_before_date = exception_date;
+                    closedBeforeDate = exceptionDate;
                 
                 } else {
 
-                    var today_date = exception_date;
-
                     while (true) {
-                        if (semester >= hours_data[library.location].length) {
+
+                        if (semester >= librarySemesters.length) {
                             break;
                         }
-                        var start_date = moment(hours_data[library.location][semester]['dates']['start']);
-                        var end_date = moment(hours_data[library.location][semester]['dates']['end']);
-                        var today_date2 = moment(today_date);
 
-                        if (today_date2.isSame(start_date, 'day') ||
-                            today_date2.isSame(end_date, 'day') ||
-                            (today_date2.isAfter(start_date, 'day') &&
-                            today_date2.isBefore(end_date, 'day'))) {
+                        var startDate = moment(librarySemesters[semester]['dates']['start']);
+                        var endDate = moment(librarySemesters[semester]['dates']['end']);
+
+                        if  (momentExceptionDate.isSame(startDate, 'day') || momentExceptionDate.isSame(endDate, 'day') ||
+                            (momentExceptionDate.isAfter(startDate, 'day') && momentExceptionDate.isBefore(endDate, 'day'))) {
 
                             break;
 
                         } else {
 
-                            hours_data[library.location][semester]['closings'] = closed;
-                            hours_data[library.location][semester]['exceptions'] = exceptions;
+                            librarySemesters[semester]['closings'] = closed;
+                            librarySemesters[semester]['exceptions'] = exceptions;
 
                             closed = [];
                             exceptions = [];
                             semester++;
-                            closed_before_date = 0;
-                            exceptions_before_date = 0;
+                            closedBeforeDate = 0;
+                            exceptionsBeforeDate = 0;
                         }
                     }
 
-                    if (exceptions_before_date) {
+                    if (exceptionsBeforeDate) {
 
-                        if (moment(today_date).isSame(moment(exceptions_before_date).add(1, 'day'))) {
+                        if (momentExceptionDate.isSame(moment(exceptionsBeforeDate).add(1, 'day'))) {
 
                             var hours = {};
                             var splithours = library[exception_name].split("-");
@@ -322,7 +323,7 @@ function getSemester(hours_data, data) {
                             if (newHours['start'] == hours['start'] && newHours['end'] == hours['end']) {
 
                                 var dates = singleException['dates'];
-                                dates['end'] = today_date;
+                                dates['end'] = exceptionDate;
                                 singleException['dates'] = dates;
 
                                 exceptions.push(singleException);
@@ -331,23 +332,23 @@ function getSemester(hours_data, data) {
 
                                 exceptions.push(singleException);
                                 
-                                exceptions.push(buildExceptionObject(exception_date, exception_name, library[exception_name]));
+                                exceptions.push(buildExceptionObject(exceptionDate, exception_name, library[exception_name]));
 
                             }
 
                         } else {
 
-                            exceptions.push(buildExceptionObject(exception_date, exception_name, library[exception_name]));
+                            exceptions.push(buildExceptionObject(exceptionDate, exception_name, library[exception_name]));
 
                         }
 
                     } else {
 
-                        exceptions.push(buildExceptionObject(exception_date, exception_name, library[exception_name]));
+                        exceptions.push(buildExceptionObject(exceptionDate, exception_name, library[exception_name]));
 
                     }
 
-                    exceptions_before_date = exception_date;
+                    exceptionsBeforeDate = exceptionDate;
 
                 }
 
@@ -355,12 +356,12 @@ function getSemester(hours_data, data) {
 
         });
         
-        hours_data[library.location][semester]['closings'] = closed;
-        hours_data[library.location][semester]['exceptions'] = exceptions;
+        librarySemesters[semester]['closings'] = closed;
+        librarySemesters[semester]['exceptions'] = exceptions;
     
     });
 
-    return hours_data;
+    return librariesObjects;
 }
 
 function convertReasons(object, data) {
@@ -384,12 +385,12 @@ function convertReasons(object, data) {
         _.each(library, function(term) {
             _.each(term['closings'], function(closing) {
 
-               closing['reason'] = exception_names_pass_two[closing['reason']];
+               closing['reason'] = exception_names_pass_two[closing['reason'].split("_")[0]];
 
             });
             _.each(term['exceptions'], function(exception) {
 
-               exception['reason'] = exception_names_pass_two[exception['reason']];
+               exception['reason'] = exception_names_pass_two[exception['reason'].split("_")[0]];
 
             });
         });
@@ -397,11 +398,11 @@ function convertReasons(object, data) {
     return(object);
 }
 
-function buildClosingObject(exception_date, exception_name) {
+function buildClosingObject(exceptionDate, exception_name) {
 
     var dates = {};
-    dates['start'] = exception_date;
-    dates['end'] = exception_date;
+    dates['start'] = exceptionDate;
+    dates['end'] = exceptionDate;
 
     var singleClosing = {};
     singleClosing['dates'] = dates;
@@ -409,11 +410,11 @@ function buildClosingObject(exception_date, exception_name) {
     return singleClosing;
 }
 
-function buildExceptionObject(exception_date, exception_name, splithours) {
+function buildExceptionObject(exceptionDate, exception_name, splithours) {
 
     var dates = {};
-    dates['start'] = exception_date;
-    dates['end'] = exception_date;
+    dates['start'] = exceptionDate;
+    dates['end'] = exceptionDate;
 
     var singleException = {};                        
     singleException['dates'] = dates;
