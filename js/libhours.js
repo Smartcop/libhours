@@ -127,79 +127,112 @@ function buildCompleteHoursObject(data, date) {
     return hours;
 }
 
-function getSingleHoursObject(completeHoursObject, date, libname) {
+function getsemesterHoursObject(completeHoursObject, date, libname) {
     return completeHoursObject[libname][moment(date).isoWeekday()-1];
 }
 
 function buildNormalHoursObject(data) {
 
-var librariesObjects = {};
+    // Format:
+        // Library Array
+            // Semester Dictionary
+                // name
+                // dates
+                    // start
+                    // end
+                // regular array
+                    // hours
+                        // start
+                        // end
+                    // days
+                // closings array
+                    // dates
+                        // start
+                        // end
+                    // reason
+                // exceptions array
+                    // dates
+                        // start
+                        // end
+                    // reason
+                    // hours
+                        // start
+                        // end
 
-_.each(data['Semester Breakdown'].elements, function(semester) {
-   
-    var dateOjbect = {};
-    dateOjbect['start'] = semester.start;
-    dateOjbect['end'] = semester.end;
+    var librariesObjects = {};
 
-    if (data[semester.semestername]) {
+    // for each semester 
+    _.each(data['Semester Breakdown'].elements, function(semester) {
+       
+        // create date object containing start and end dates of that semester
+        var dateOjbect = {};
+        dateOjbect['start'] = semester.start;
+        dateOjbect['end'] = semester.end;
 
-        _.each(data[semester.semestername].elements, function(library) {
+        if (data[semester.semestername]) {
 
-            var termObject = {};
-            termObject['name'] = semester.semestername;
-            termObject['dates'] = dateOjbect;
+            // for each semester gather all of the hours for each library
+            _.each(data[semester.semestername].elements, function(library) {
 
-            var hoursObject = {};
-            var singleHours = [];
-            var dayLetters = ['M','T','W','R','F','S','U'];
-            var names_per_day = [
-                'monday',
-                'tuesday',
-                'wednesday',
-                'thursday',
-                'friday',
-                'saturday',
-                'sunday'
-            ];
+                // create term object containing name, date object (start & end date)
+                var termObject = {};
+                termObject['name'] = semester.semestername;
+                termObject['dates'] = dateOjbect;
 
-            for (var i = 0 ; i < names_per_day.length ; i++) {
-
-                var dayHours = {};
                 var hoursObject = {};
-                var dayLetter = dayLetters[i];
+                var semesterHours = [];
+                var dayLetters = ['M','T','W','R','F','S','U'];
+                var names_per_day = [
+                    'monday',
+                    'tuesday',
+                    'wednesday',
+                    'thursday',
+                    'friday',
+                    'saturday',
+                    'sunday'
+                ];
 
-                var splithours = library[names_per_day[i]].split("-");
-                dayHours['start'] = splithours[0];
-                dayHours['end'] = splithours[1];
+                // for each day create objects that are in the form of: hours{start, end} days:'MTWHF'
+                // we loop through the days and keep track of the previous day's hours to combine the days
+                // if the hours are the same
+                for (var i = 0 ; i < names_per_day.length ; i++) {
 
-                if (singleHours.length > 0 ) {
-                    var poppedHoursObject = singleHours.pop();
-                    var poppedHours = poppedHoursObject['hours'];
-                    if (poppedHours['start'] == dayHours['start'] && poppedHours['end'] == dayHours['end']) {
-                        poppedHoursObject['days'] = poppedHoursObject['days'].concat(dayLetter);
-                        singleHours.push(poppedHoursObject);
+                    var dayHours = {};
+                    var hoursObject = {};
+                    var dayLetter = dayLetters[i];
+
+                    var splithours = library[names_per_day[i]].split("-");
+                    dayHours['start'] = splithours[0];
+                    dayHours['end'] = splithours[1];
+
+                    if (semesterHours.length > 0 ) {
+                        var poppedHoursObject = semesterHours.pop();
+                        var poppedHours = poppedHoursObject['hours'];
+                        if (poppedHours['start'] == dayHours['start'] && poppedHours['end'] == dayHours['end']) {
+                            poppedHoursObject['days'] = poppedHoursObject['days'].concat(dayLetter);
+                            semesterHours.push(poppedHoursObject);
+                        } else {
+                            semesterHours.push(poppedHoursObject);
+                            hoursObject['hours'] = dayHours;
+                            hoursObject['days'] = dayLetter;
+                            semesterHours.push(hoursObject);
+                        }
                     } else {
-                        singleHours.push(poppedHoursObject);
                         hoursObject['hours'] = dayHours;
                         hoursObject['days'] = dayLetter;
-                        singleHours.push(hoursObject);
+                        semesterHours.push(hoursObject);
                     }
-                } else {
-                    hoursObject['hours'] = dayHours;
-                    hoursObject['days'] = dayLetter;
-                    singleHours.push(hoursObject);
                 }
-            }
 
-            var regularHours = librariesObjects[library.location];
-            if (!regularHours) {
-                regularHours = [];
-            }
+                var regularHours = librariesObjects[library.location];
+                if (!regularHours) {
+                    regularHours = [];
+                }
 
-            termObject['regular'] = singleHours;
-            regularHours.push(termObject);
-            librariesObjects[library.location] = regularHours;
-            
+                termObject['regular'] = semesterHours;
+                regularHours.push(termObject);
+                librariesObjects[library.location] = regularHours;
+                
             });
         }
     });
