@@ -211,12 +211,12 @@ function buildNormalHoursObject(data) {
                         var poppedHoursObject = semesterHours.pop();
                         var poppedHours = poppedHoursObject['hours'];
                         
-                        // If previous days hours are the same as todays
+                        // If previous day's hours are the same as todays
                         if (poppedHours['start'] == dayHours['start'] && poppedHours['end'] == dayHours['end']) {
                             poppedHoursObject['days'] = poppedHoursObject['days'].concat(dayLetter);
                             semesterHours.push(poppedHoursObject);
 
-                        // If previous days hours are different that todays
+                        // If previous day's hours are different that todays
                         } else {
                             semesterHours.push(poppedHoursObject);
                             hoursObject['hours'] = dayHours;
@@ -237,7 +237,7 @@ function buildNormalHoursObject(data) {
                     regularHours = [];
                 }
 
-                // add regular hours to library object regular hours array
+                // add regular hours to library object's regular hours array
                 termObject['regular'] = semesterHours;
                 regularHours.push(termObject);
                 librariesObjects[library.location] = regularHours;
@@ -304,7 +304,7 @@ function getExceptionsAndClosings(librariesObjects, data) {
                         }
                     }
 
-                    // If previous date and exception name are the same change end date 
+                    // If previous date is the same
                     if (momentExceptionDate.isSame(moment(closedBeforeDate).add(1, 'day'))) {
                        
                         var singleException = closed.pop();
@@ -361,7 +361,7 @@ function getExceptionsAndClosings(librariesObjects, data) {
                         }
                     }
 
-                    // If previous date, start hours, end hours, and exception name are the same change end date 
+                    // If previous date is the same
                     if (momentExceptionDate.isSame(moment(exceptionsBeforeDate).add(1, 'day'))) {
 
                         var hours = {};
@@ -373,7 +373,7 @@ function getExceptionsAndClosings(librariesObjects, data) {
                         var singleException = exceptions.pop();
 
                         var newHours = singleException['hours'];
-                        // If previous is same change end date
+                        // If previous start hours, end hours, and exception name are the same change end date 
                         if (newHours['start'] == hours['start'] && newHours['end'] == hours['end'] && singleException['reason'].split("_")[0] == exceptionName.split("_")[0]) {
 
                             var dates = singleException['dates'];
@@ -408,18 +408,29 @@ function getExceptionsAndClosings(librariesObjects, data) {
 
 function convertReasons(object, data) {
 
-    var exceptionNamesPassOne = {};
-    var exceptionNamesPassTwo = {};
+    var exceptionNamesDictionary = {};
 
+    // for each exception name ID
     _.each(data['Holidays and Special Hours'].original_columns.slice(1), function(exceptionName) {
 
-        exceptionNamesPassOne[exceptionName] = exceptionName.split("_")[0];
+        // remove _# from duplicate ids (weatherclosing_3 into weatherclosing)
+        // dictionary has "weatherclosing" key to "weatherclosing" value
+
+        var truncatedOriginalColumn = exceptionName.split("_")[0];
+        exceptionNamesDictionary[truncatedOriginalColumn] = truncatedOriginalColumn;
+
     });
 
+    // for each exception Name Pretty Name
     _.each(data['Holidays and Special Hours'].column_names.slice(1), function(exceptionName) {
 
-        if (exceptionNamesPassOne[exceptionName.replace(/[^\w]/g,'').toLowerCase()]) {
-            exceptionNamesPassTwo[exceptionName.replace(/[^\w]/g,'').toLowerCase()] = exceptionName;
+        // change displayed exception Name into id (Weather closing into weatherclosing)
+        var removeCharacterNotLetterOrNumber = exceptionName.replace(/[^\w]/g,'').toLowerCase();
+
+        // if there is exception id in the exceptionNamesDictionary dictionary that mathces the transformed
+        // Pretty Name then create a new "weatherclosing" key to "Weather closing" value
+        if (exceptionNamesDictionary[removeCharacterNotLetterOrNumber]) {
+            exceptionNamesDictionary[removeCharacterNotLetterOrNumber] = exceptionName;
         }
     });
 
@@ -427,17 +438,17 @@ function convertReasons(object, data) {
         _.each(library, function(term) {
             _.each(term['closings'], function(closing) {
 
-               closing['reason'] = exceptionNamesPassTwo[closing['reason'].split("_")[0]];
+               closing['reason'] = exceptionNamesDictionary[closing['reason'].split("_")[0]];
 
             });
             _.each(term['exceptions'], function(exception) {
 
-               exception['reason'] = exceptionNamesPassTwo[exception['reason'].split("_")[0]];
+               exception['reason'] = exceptionNamesDictionary[exception['reason'].split("_")[0]];
 
             });
         });
     });
-    return(object);
+    return object;
 }
 
 function buildClosingObject(exceptionDate, exceptionName) {
