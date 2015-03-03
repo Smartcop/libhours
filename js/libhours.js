@@ -8,6 +8,10 @@
 // e.g. pass in December 16, and you get an object that contains hours for 
 // monday-sunday of the week of the 16th, same if you pass in December 17,
 // since that is in the same week.
+
+var underscore = require('./vendor/underscore.js');
+var moment = require('./vendor/moment.js');
+
 function buildCompleteHoursObject(data, date) {
     // moment will accept lots of different date formats
     var moment_date = moment(date);
@@ -106,7 +110,7 @@ function buildCompleteHoursObject(data, date) {
     _.each(data['Holidays and Special Hours'].elements.slice(1), function(lib) {
         for (var i=0; i < 7; i++) {
             var library = lib.location;
-            var date = dates_per_day[i].format('M/D/YYYY');
+            var date = dates_per_day[i].format('MM/DD/YYYY');
             var day_name = names_per_day[i];
             var semester = semester_per_day[i].semestername;
 
@@ -130,8 +134,7 @@ function buildCompleteHoursObject(data, date) {
 function getsemesterHoursObject(completeHoursObject, date, libname) {
     return completeHoursObject[libname][moment(date).isoWeekday()-1];
 }
-
-function buildNormalHoursObject(data) {
+exports.buildNormalHoursObject = function(data) {
 
     // Format:
         // Library Array
@@ -162,21 +165,20 @@ function buildNormalHoursObject(data) {
     var librariesObjects = {};
 
     // for each semester 
-    _.each(data['Semester Breakdown'].elements, function(semester) {
-       
+    underscore._.each(data['Semester Breakdown'].elements, function(semester) {
+
         // create date object containing start and end dates of that semester
         var dateOjbect = {};
-        dateOjbect['start'] = semester.start;
-        dateOjbect['end'] = semester.end;
+        dateOjbect['start'] = semester["start"];
+        dateOjbect['end'] = semester["end"];
 
-        if (data[semester.semestername]) {
-
+        if (data[semester['semestername']]) {
             // for each semester gather all of the hours for each library
-            _.each(data[semester.semestername].elements, function(library) {
+            underscore._.each(data[semester['semestername']].elements, function(library) {
 
                 // create term object containing name, date object (start & end date)
                 var termObject = {};
-                termObject['name'] = semester.semestername;
+                termObject['name'] = semester['semestername'];
                 termObject['dates'] = dateOjbect;
 
                 var hoursObject = {};
@@ -232,7 +234,7 @@ function buildNormalHoursObject(data) {
                     }
                 }
 
-                var regularHours = librariesObjects[library.location];
+                var regularHours = librariesObjects[library['location']];
                 if (!regularHours) {
                     regularHours = [];
                 }
@@ -240,7 +242,7 @@ function buildNormalHoursObject(data) {
                 // add regular hours to library object's regular hours array
                 termObject['regular'] = semesterHours;
                 regularHours.push(termObject);
-                librariesObjects[library.location] = regularHours;
+                librariesObjects[library['location']] = regularHours;
                 
             });
         }
@@ -252,7 +254,7 @@ function buildNormalHoursObject(data) {
 function getExceptionsAndClosings(librariesObjects, data) {
 
     // for each library's closings and exceptions
-    _.each(data['Holidays and Special Hours'].elements.slice(1), function(library) {
+    underscore._.each(data['Holidays and Special Hours'].elements.slice(1), function(library) {
 
         var semester = 0;
         var closed = [];
@@ -260,20 +262,20 @@ function getExceptionsAndClosings(librariesObjects, data) {
         var closedBeforeDate;
         var exceptionsBeforeDate;
 
-        var librarySemesters = librariesObjects[library.location];
+        var librarySemesters = librariesObjects[library['location']];
 
         // for each closing and exception
-         _.each(data['Holidays and Special Hours'].column_names.slice(1), function(exceptionName) {
+        underscore._.each(data['Holidays and Special Hours'].column_names.slice(1), function(exceptionName) {
 
             if (library[exceptionName]) {
 
                 var exceptionDate = data['Holidays and Special Hours'].elements[0][exceptionName];
 
-                var momentExceptionDate = moment(exceptionDate);
+                var momentExceptionDate = moment(exceptionDate, 'MM/DD/YYYY');
 
                 // if closed
                 if (library[exceptionName] == 'closed') {
-                                  
+
                     // loop through the semester dates until the exception date is in semester
                     while (true) {
 
@@ -281,8 +283,8 @@ function getExceptionsAndClosings(librariesObjects, data) {
                             break;
                         }
 
-                        var startDate = moment(librarySemesters[semester]['dates']['start']);
-                        var endDate = moment(librarySemesters[semester]['dates']['end']);
+                        var startDate = moment(librarySemesters[semester]['dates']['start'], 'MM/DD/YYYY');
+                        var endDate = moment(librarySemesters[semester]['dates']['end'], 'MM/DD/YYYY');
 
                         // exception date is in semester
                         if  (momentExceptionDate.isSame(startDate, 'day') || momentExceptionDate.isSame(endDate, 'day') ||
@@ -305,7 +307,7 @@ function getExceptionsAndClosings(librariesObjects, data) {
                     }
 
                     // If previous date is the same
-                    if (momentExceptionDate.isSame(moment(closedBeforeDate).add(1, 'day'))) {
+                    if (momentExceptionDate.isSame(moment(closedBeforeDate, 'MM/DD/YYYY').add(1, 'day'))) {
                        
                         var singleException = closed.pop();
 
@@ -338,8 +340,8 @@ function getExceptionsAndClosings(librariesObjects, data) {
                             break;
                         }
 
-                        var startDate = moment(librarySemesters[semester]['dates']['start']);
-                        var endDate = moment(librarySemesters[semester]['dates']['end']);
+                        var startDate = moment(librarySemesters[semester]['dates']['start'], 'MM/DD/YYYY');
+                        var endDate = moment(librarySemesters[semester]['dates']['end'], 'MM/DD/YYYY');
 
                         // exception date is in semester
                         if  (momentExceptionDate.isSame(startDate, 'day') || momentExceptionDate.isSame(endDate, 'day') ||
@@ -362,7 +364,7 @@ function getExceptionsAndClosings(librariesObjects, data) {
                     }
 
                     // If previous date is the same
-                    if (momentExceptionDate.isSame(moment(exceptionsBeforeDate).add(1, 'day'))) {
+                    if (momentExceptionDate.isSame(moment(exceptionsBeforeDate, 'MM/DD/YYYY').add(1, 'day'))) {
 
                         var hours = {};
                         var splithours = library[exceptionName].split("-");
@@ -406,12 +408,12 @@ function getExceptionsAndClosings(librariesObjects, data) {
     return librariesObjects;
 }
 
-function convertReasons(object, data) {
+exports.convertReasons = function(object, data) {
 
     var exceptionNamesDictionary = {};
 
     // for each exception name ID
-    _.each(data['Holidays and Special Hours'].original_columns.slice(1), function(exceptionName) {
+    underscore._.each(data['Holidays and Special Hours'].original_columns.slice(1), function(exceptionName) {
 
         // remove _# from duplicate ids (weatherclosing_3 into weatherclosing)
         // dictionary has "weatherclosing" key to "weatherclosing" value
@@ -422,7 +424,7 @@ function convertReasons(object, data) {
     });
 
     // for each exception Name Pretty Name
-    _.each(data['Holidays and Special Hours'].column_names.slice(1), function(exceptionName) {
+    underscore._.each(data['Holidays and Special Hours'].column_names.slice(1), function(exceptionName) {
 
         // change displayed exception Name into id (Weather closing into weatherclosing)
         var removeCharacterNotLetterOrNumber = exceptionName.replace(/[^\w]/g,'').toLowerCase();
@@ -434,14 +436,14 @@ function convertReasons(object, data) {
         }
     });
 
-    _.each(object, function(library) {
-        _.each(library, function(term) {
-            _.each(term['closings'], function(closing) {
+    underscore._.each(object, function(library) {
+        underscore._.each(library, function(term) {
+            underscore._.each(term['closings'], function(closing) {
 
                closing['reason'] = exceptionNamesDictionary[closing['reason'].split("_")[0]];
 
             });
-            _.each(term['exceptions'], function(exception) {
+            underscore._.each(term['exceptions'], function(exception) {
 
                exception['reason'] = exceptionNamesDictionary[exception['reason'].split("_")[0]];
 
